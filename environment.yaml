@@ -1,0 +1,21 @@
+name: anyup
+
+channels:
+  - conda-forge
+
+dependencies:
+  - python =3.12
+  - einops
+  - matplotlib
+  - numpy
+  - timm
+  - plotly
+  - tensorboard
+  - hydra-core
+  - ipykernel
+  - rich
+  - scikit-learn
+  - torchmetrics
+  - transformers
+  - pytorch
+  - torchvision

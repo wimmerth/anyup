@@ -27,6 +27,14 @@ types, and preserves feature semantics while being efficient and easy to apply t
 
 ---
 
+### How to install AnyUp (from source):
+
+1. Clone the repository: `git clone https://github.com/wimmerth/anyup`
+2. Enter it: `cd anyup`
+3. Create the respective environment: `micromamba env create -f environment.yaml`
+4. Activate the environment: `micromamba activate anyup`
+4. Install `anyup`: `pip install -e .`
+
 ### Use AnyUp to upsample your features!
 
 Upsample features from any model, at any layer without having to retrain the upsampler. It's as easy as this:
@@ -79,19 +87,6 @@ hr_features = upsampler(hr_image, lr_features, vis_attn=True)
 If you want to train your own AnyUp model on custom data or with different hyperparameters, you can do so by running
 the `train.py` script. We use [hydra](https://hydra.cc/docs/intro/) for configuration management, so you can easily modify
 hyperparameters in the corresponding config files.
-
-<details>
-  <summary>Install the required dependencies for training:</summary>
-  
-```bash
-micromamba create -n anyup python=3.12 -y
-micromamba activate anyup
-pip install uv
-uv pip install einops matplotlib numpy timm plotly tensorboard hydra-core ipykernel rich scikit-learn torchmetrics transformers torch torchvision
-```
-
-</details> 
-
 
 We trained our model on the ImageNet dataset, which you will have to download and put into `./data/imagenet` before
 running the training script. We further use information on the image resolutions in ImageNet, which can be created
