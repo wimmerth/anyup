@@ -1,13 +1,29 @@
 # conf/config.yaml
 defaults:
   - model: anyup
-  - backbone: base
   - optimizer: adamw
   - dataset@train_dataset: train
   - dataset@val_dataset: val
   - dataloader@train_dataloader: train
   - dataloader@val_dataloader: val
 
+# Multi-backbone training
+backbones:
+  dinov2_s:
+    _target_: anyup.backbone.vit_wrapper.PretrainedViTWrapper
+    name: vit_small_patch14_dinov2.lvd142m
+  clip_b:
+    _target_: anyup.backbone.vit_wrapper.PretrainedViTWrapper
+    name: vit_base_patch16_clip_384
+  siglip_b:
+    _target_: anyup.backbone.vit_wrapper.PretrainedViTWrapper
+    name: vit_base_patch16_siglip_512.v2_webli
+  dinov2_reg:
+    _target_: anyup.backbone.vit_wrapper.PretrainedViTWrapper
+    name: vit_small_patch14_reg4_dinov2
+  vit_b:
+    _target_: anyup.backbone.vit_wrapper.PretrainedViTWrapper
+    name: vit_base_patch16_224
 
 # General parameters
 epochs: 4

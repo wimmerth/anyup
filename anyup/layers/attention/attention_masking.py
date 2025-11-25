@@ -69,6 +69,6 @@ def compute_attention_mask(high_res_h, high_res_w, low_res_h, low_res_w, window_
 
     # broadcast to (q, h_, w_) and flatten last two dims
     attention_mask = (row_ok.unsqueeze(2) & col_ok.unsqueeze(1)) \
-        .reshape(q, h_ * w_).to(dtype=torch.bool)
+        .reshape(q, h_ * w_)
 
     return ~attention_mask

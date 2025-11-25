@@ -122,22 +122,22 @@ def get_dataloaders(cfg, backbone, is_evaluation=False, mean=None, std=None, shu
     train_batch_tf = None
     val_batch_tf = None
     if not is_evaluation:
-        global_view_random_crop = getattr(cfg, "global_view_random_crop", None)
-        if isinstance(global_view_random_crop, float):
-            global_view_random_crop = (global_view_random_crop, 1.0)
-        elif isinstance(global_view_random_crop, str):
+        global_view_random_resize = getattr(cfg, "global_view_random_resize", None)
+        if isinstance(global_view_random_resize, float):
+            global_view_random_resize = (global_view_random_resize, 1.0)
+        elif isinstance(global_view_random_resize, str):
             from ast import literal_eval as make_tuple
-            global_view_random_crop = make_tuple(global_view_random_crop)
-        elif global_view_random_crop is not None:
-            raise ValueError("global_view_random_crop must be float or tuple(float, float)")
+            global_view_random_resize = make_tuple(global_view_random_resize)
+        elif global_view_random_resize is not None:
+            raise ValueError("global_view_random_resize must be float or tuple(float, float)")
 
         train_batch_tf = BatchMultiCrop(
             crop_size=cfg.img_size, patch_size=backbone.patch_size, num_crops=cfg.num_local_crops,
-            global_view_random_crop=global_view_random_crop
+            global_view_random_resize=global_view_random_resize
         )
         val_batch_tf = BatchMultiCrop(
             crop_size=cfg.img_size, patch_size=backbone.patch_size, num_crops=cfg.num_local_crops,
-            global_view_random_crop=global_view_random_crop
+            global_view_random_resize=global_view_random_resize
         )
 
 

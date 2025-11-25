@@ -4,8 +4,9 @@ import torch
 
 from .layers import ResBlock
 from .layers import LearnedFeatureUnification
-from .layers import CrossAttentionBlock
+from .layers import setup_cross_attention_block
 from .layers import RoPE
+from .layers.attention import CrossAttentionBlock
 from .utils.img import create_coordinate
 
 
@@ -19,10 +20,13 @@ class AnyUp(nn.Module):
             window_ratio=0.1,
             num_heads=4,
             init_gaussian_derivatives=False,
+            use_natten=False,
+            lfu_dim=None,
             **kwargs,
     ):
         super().__init__()
         self.qk_dim = qk_dim
+        self.lfu_dim = lfu_dim if lfu_dim is not None else qk_dim
         self.window_ratio = window_ratio
         self._rb_args = dict(kernel_size=1, num_groups=8, pad_mode="reflect", norm_fn=nn.GroupNorm,
                              activation_fn=nn.SiLU)
@@ -35,7 +39,12 @@ class AnyUp(nn.Module):
                                                        init_gaussian_derivatives=init_gaussian_derivatives)
 
         # Cross-attention
-        self.cross_decode = CrossAttentionBlock(qk_dim=qk_dim, num_heads=num_heads, window_ratio=window_ratio)
+        self.cross_decode = setup_cross_attention_block(
+            use_natten=use_natten,
+            qk_dim=qk_dim,
+            num_heads=num_heads,
+            window_ratio=window_ratio
+        )
         self.aggregation = self._make_encoder(2 * qk_dim, 3)
 
         # RoPE for (H*W, C)
@@ -46,9 +55,10 @@ class AnyUp(nn.Module):
         pre = (
             nn.Conv2d(in_ch, self.qk_dim, k, padding=k // 2, padding_mode="reflect", bias=False)
             if first_layer_k == 0 else
-            LearnedFeatureUnification(self.qk_dim, first_layer_k, init_gaussian_derivatives=init_gaussian_derivatives)
+            LearnedFeatureUnification(self.lfu_dim, first_layer_k, init_gaussian_derivatives=init_gaussian_derivatives)
         )
-        blocks = [ResBlock(self.qk_dim, self.qk_dim, **self._rb_args) for _ in range(layers)]
+        blocks = [ResBlock(self.qk_dim if first_layer_k == 0 or i !=0 else self.lfu_dim, self.qk_dim, **self._rb_args)
+                  for i in range(layers)]
         return nn.Sequential(pre, *blocks)
 
     def upsample(self, enc_img, feats, out_size, vis_attn=False, q_chunk_size=None):
@@ -64,6 +74,11 @@ class AnyUp(nn.Module):
 
         # V
         v = feats
+
+        if not isinstance(self.cross_decode, CrossAttentionBlock) and vis_attn:
+            import warnings
+            warnings.warn("Visualization of attention maps is not supported for NATTEN-based cross-attention.")
+            vis_attn = False
 
         return self.cross_decode(q, k, v, vis_attn=vis_attn, q_chunk_size=q_chunk_size)
 
