@@ -27,3 +27,5 @@ dependencies:
   # - pytorch=*=cpu*
   - pytorch
   - torchvision
+  - pip:
+      - natten
