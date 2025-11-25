@@ -1,6 +1,5 @@
 # Adapted from JAFAR (https://github.com/PaulCouairon/JAFAR)
 import torch
-from einops import rearrange
 from torch import nn
 
 
@@ -11,8 +10,8 @@ class Cosine_MSE(nn.Module):
         self.cosine_loss = torch.nn.CosineEmbeddingLoss()
 
     def forward(self, pred, target):
-        pred = rearrange(pred, "b c h w -> (b h w) c")
-        target = rearrange(target, "b c h w -> (b h w) c")
+        pred = pred.permute(0, 2, 3, 1).reshape(-1, pred.shape[1])
+        target = target.permute(0, 2, 3, 1).reshape(-1, target.shape[1])
 
         gt = torch.ones_like(target[:, 0])
 

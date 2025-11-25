@@ -1,14 +1,16 @@
 # Adapted from JAFAR (https://github.com/PaulCouairon/JAFAR)
 import datetime
 import os
+import random
 from pathlib import Path
 
 import hydra
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 from hydra.core.hydra_config import HydraConfig
 from hydra.utils import instantiate
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig, OmegaConf, ListConfig
 from rich import print
 from rich.console import Console
 from rich.syntax import Syntax
@@ -16,7 +18,6 @@ from torch import autocast
 from tqdm import tqdm
 
 from anyup.utils.training import get_batch, get_dataloaders, logger
-
 from anyup.loss import Cosine_MSE
 
 FREQ = 100
@@ -60,8 +61,36 @@ def trainer(cfg: DictConfig):
 
     # ============ Load Backbones ============ #
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    backbone = instantiate(cfg.backbone)
-    backbone = backbone.to(device)
+
+    backbones = nn.ModuleDict()
+    patch_sizes_map = {}
+
+    # Check if 'backbone' is a single config or a dictionary/list of configs
+    # Ideally, configure cfg.backbones as a Dict of backbone configs
+    if "backbones" in cfg:
+        backbone_configs = cfg.backbones
+    else:
+        # Fallback for backward compatibility
+        backbone_configs = {"default": cfg.backbone}
+
+    log_print("[bold green]Loading Backbones...[/bold green]")
+    all_patch_sizes = set()
+
+    for name, bk_cfg in backbone_configs.items():
+        bk_model = instantiate(bk_cfg)
+        bk_model = bk_model.to(device)
+        bk_model.eval()
+        backbones[name] = bk_model
+
+        p_size = bk_model.patch_size
+        if isinstance(p_size, tuple): p_size = p_size[0]  # Handle (14,14)
+
+        if p_size not in patch_sizes_map:
+            patch_sizes_map[p_size] = []
+        patch_sizes_map[p_size].append(name)
+        all_patch_sizes.add(p_size)
+
+        log_print(f"Loaded {name}: Patch Size={p_size}")
 
     log_print(f"[bold yellow]Using device: {device}[/bold yellow]")
     log_print(f"\n[bold cyan]Image size: {cfg.img_size}[/bold cyan]")
@@ -83,8 +112,28 @@ def trainer(cfg: DictConfig):
     anyup.cuda()
     anyup.train()
 
-    # ============ preparing Datasets and Dataloaders ============ #
-    train_dataloader, _ = get_dataloaders(cfg, backbone, augmentation_strength=cfg.get("augmentation_strength", 1.0))
+    # ============ Preparing Datasets ============ #
+    # We pass the list of ALL unique patch sizes to the dataloader
+    first_backbone = list(backbones.values())[0]
+
+    mean = [0.485, 0.456, 0.406]
+    std = [0.229, 0.224, 0.225]
+
+    class MultiPatchBackboneInfo:
+        def __init__(self, p_sizes, config):
+            self.patch_size = p_sizes
+            self.config = config
+
+    dummy_backbone_info = MultiPatchBackboneInfo(list(all_patch_sizes), {"mean": mean, "std": std})
+
+    train_dataloader, _ = get_dataloaders(
+        cfg,
+        dummy_backbone_info,  # Passes list of patch sizes
+        augmentation_strength=cfg.get("augmentation_strength", 1.0),
+        mean=mean,
+        std=std
+    )
+
     log_print(f"[bold cyan]Train Dataset size: {len(train_dataloader.dataset)}[/bold cyan]")
 
     # ============ Get training criterion ================= #
@@ -117,8 +166,18 @@ def trainer(cfg: DictConfig):
 
             batch = get_batch(batch, device)
 
-            hr_image_batch = batch["hr_image"]  # always (N,C,H,W)
-            lr_image_batch = batch.get("lr_image", hr_image_batch)  # (M,C,h,w), M may be < N
+            # 1. Retrieve the patch size chosen by the collate function
+            current_patch_size = batch["patch_size"]
+            if isinstance(current_patch_size, torch.Tensor):
+                current_patch_size = current_patch_size[0].item()
+
+            # 2. Select a backbone compatible with this patch size
+            available_backbones = patch_sizes_map[current_patch_size]
+            selected_backbone_name = random.choice(available_backbones)
+            backbone = backbones[selected_backbone_name]
+
+            hr_image_batch = batch["hr_image"]
+            lr_image_batch = batch.get("lr_image", hr_image_batch)
             guidance_image_batch = batch.get("guidance_image", hr_image_batch)
 
             with autocast(device_type="cuda", dtype=torch.bfloat16):
@@ -127,11 +186,12 @@ def trainer(cfg: DictConfig):
                     hr_feats, _ = backbone(hr_image_batch)  # (N, ...)
                     lr_feats, _ = backbone(lr_image_batch)  # (M, ...)
 
-                # h,w for anyup (patch units)
-                if "upsampling_size" in batch:
-                    h = w = int(batch["upsampling_size"])
-                else:
-                    _, _, h, w = hr_feats.shape
+                # Handle upsampling size (h, w)
+                # If batch["upsampling_size"] is a tensor (from collate), extract int
+                ups_size = batch.get("upsampling_size")
+                if isinstance(ups_size, torch.Tensor):
+                    ups_size = int(ups_size[0].item())
+                h = w = ups_size if ups_size else hr_feats.shape[-2]
 
                 # predict
                 anyup_hr_feats = anyup(guidance_image_batch, lr_feats, (h, w))

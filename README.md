@@ -27,6 +27,20 @@ types, and preserves feature semantics while being efficient and easy to apply t
 
 ---
 
+🔔 **News:**
+
+**[11/25]** We added a **more efficient** (both memory and speed-wise) [NATTEN](https://natten.org/)-based version of the
+window attention module used in AnyUp. You can load the new model by specifying `use_natten=True` when loading the model
+from torch.hub. Please note, that this model variant uses slightly different windows than the original AnyUp model,
+which was used for all experiments in the paper. If you want to use it in your project, you have to install NATTEN in
+addition to PyTorch. Follow the official [install instructions for your CUDA version](https://natten.org/install/).
+
+**[11/25]** We further added **multi-backbone training** to our codebase, which allows training a single AnyUp model
+with multiple different feature extractors. This improves generalization to unseen backbones at inference time.
+To use this feature, please load the pre-trained model with `torch.hub.load('wimmerth/anyup', 'anyup_multi_backbone')`.
+
+---
+
 ### How to install AnyUp (from source):
 
 1. Clone the repository: `git clone https://github.com/wimmerth/anyup`
@@ -34,6 +48,8 @@ types, and preserves feature semantics while being efficient and easy to apply t
 3. Create the respective environment: `micromamba env create -f environment.yaml`
 4. Activate the environment: `micromamba activate anyup`
 4. Install `anyup`: `pip install -e .`
+
+---
 
 ### Use AnyUp to upsample your features!
 
@@ -45,8 +61,8 @@ import torch
 hr_image    = ...
 # low-resolution features (B, C, h, w) 
 lr_features = ...
-# load the AnyUp upsampler model
-upsampler   = torch.hub.load('wimmerth/anyup', 'anyup')
+# load the AnyUp upsampler model (here we use the NATTEN-based version trained on multiple backbones)
+upsampler   = torch.hub.load('wimmerth/anyup', 'anyup_multi_backbone', use_natten=True)
 # upsampled high-resolution features (B, C, H, W)
 hr_features = upsampler(hr_image, lr_features)
 ```
@@ -68,16 +84,23 @@ If you have limited compute resources and run into OOM issues when upsampling to
 
 ```python
 # upsampled features using chunking to save memory (B, C, H, W)
-hr_features = upsampler(hr_image, lr_features, q_chunk_size=128)
+hr_features = upsampler(hr_image, lr_features, q_chunk_size=10)
 ```
 
 If you are interested in the attention that is used by AnyUp to upsample the features, we included an optional
-visualization thereof in the forward pass:
+visualization thereof in the forward pass (only available if `use_natten=False`):
 
 ```python
 # matplotlib must be installed to use this feature
 # upsampled features and display attention map visualization (B, C, H, W)
 hr_features = upsampler(hr_image, lr_features, vis_attn=True)
+```
+
+To use the model proposed in the original AnyUp paper (without NATTEN and trained on a single backbone, DINOv2 ViT-S),
+load it with
+
+```python
+upsampler = torch.hub.load('wimmerth/anyup', 'anyup')
 ```
 
 ---
@@ -92,10 +115,6 @@ We trained our model on the ImageNet dataset, which you will have to download an
 running the training script. We further use information on the image resolutions in ImageNet, which can be created
 using the `comput_sizes_index.py` script. You can also download this file directly from the releases and put it into
 `./data/cache/train.sizes.tsv`.
-
-**Future Fixes:**
-We are also planning to integrate FlexAttention support to speed up the window attention and reduce memory consumption.
-We are always happy for a helping hand, so feel free to reach out if you want to contribute!
 
 **Evaluation** followed the protocols of [JAFAR](https://github.com/PaulCouairon/JAFAR) for semantic segmentation and
 [Probe3D](https://github.com/mbanani/probe3d) for surface normal and depth estimation. Note that we applied a small fix
