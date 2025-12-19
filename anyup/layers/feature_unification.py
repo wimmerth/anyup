@@ -38,5 +38,5 @@ class LearnedFeatureUnification(nn.Module):
         x = F.pad(feats, (p, p, p, p), value=0)
         x = F.conv2d(x, basis.repeat(c, 1, 1, 1), groups=c)
         mask = torch.ones(1, 1, h, w, dtype=x.dtype, device=x.device)
-        denom = F.conv2d(F.pad(mask, (p, p, p, p), value=0), torch.ones(1, 1, k, k, device=x.device))
+        denom = F.conv2d(F.pad(mask, (p, p, p, p), value=0), torch.ones(1, 1, k, k, dtype=x.dtype, device=x.device))
         return x / denom  # (B, out_channels*C, H, W)
