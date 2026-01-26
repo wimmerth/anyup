@@ -1,4 +1,4 @@
-### AnyUp: Universal Feature Upsampling
+### [ICLR '26] AnyUp: Universal Feature Upsampling
 
 [**Thomas Wimmer**](https://wimmerth.github.io/)<sup>1,2</sup>,
 [Prune Truong](https://prunetruong.com/)<sup>3</sup>,
@@ -162,10 +162,10 @@ authors for open-sourcing their code. Other note-worthy open-source repositories
 
 If you find our work useful in your research, please cite it as:
 ```
-@article{wimmer2025anyup,
+@inproceedings{wimmer2026anyup,
     title={AnyUp: Universal Feature Upsampling},
     author={Wimmer, Thomas and Truong, Prune and Rakotosaona, Marie-Julie and Oechsle, Michael and Tombari, Federico and Schiele, Bernt and Lenssen, Jan Eric},
-    journal={arXiv preprint arXiv:2510.12764},
-    year={2025}
+    booktitle={Proceedings of the International Conference on Learning Representations ({ICLR})},
+    year={2026}
 }
 ```
