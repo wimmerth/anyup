@@ -1,4 +1,4 @@
-### [ICLR '26] AnyUp: Universal Feature Upsampling
+### [ICLR '26 Oral] AnyUp: Universal Feature Upsampling
 
 [**Thomas Wimmer**](https://wimmerth.github.io/)<sup>1,2</sup>,
 [Prune Truong](https://prunetruong.com/)<sup>3</sup>,
