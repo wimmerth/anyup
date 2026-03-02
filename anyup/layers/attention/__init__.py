@@ -22,6 +22,10 @@ def setup_cross_attention_block(use_natten: bool,
                 "Please ensure that the natten module is installed correctly."
                 "Falling back to standard CrossAttentionBlock."
             )
+
+            if "use_params_from" in kwargs:
+                return kwargs["use_params_from"]
+
             return CrossAttentionBlock(
                 qk_dim=qk_dim,
                 num_heads=num_heads,
@@ -29,6 +33,7 @@ def setup_cross_attention_block(use_natten: bool,
                 q_chunk_size=q_chunk_size,
                 **kwargs
             )
+
         print("Using the optimized NATTEN Cross-Attention Block. Does not match the standard cross-attention exactly.")
         return NATTENCrossAttentionBlock(
             qk_dim=qk_dim,
