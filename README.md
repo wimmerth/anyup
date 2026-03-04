@@ -5,7 +5,7 @@
 [Marie-Julie Rakotosaona](https://scholar.google.com/citations?user=eQ0om98AAAAJ&hl=en)<sup>3</sup>,
 [Michael Oechsle](https://moechsle.github.io/)<sup>3</sup>,
 [Federico Tombari](https://federicotombari.github.io/)<sup>3,4</sup>,
-[Bernt Schiele](https://www.mpi-inf.mpg.de/departments/computer-vision-and-machine-learning/people/bernt-schiele)<sup>1</sup>
+[Bernt Schiele](https://www.mpi-inf.mpg.de/departments/computer-vision-and-machine-learning/people/bernt-schiele)<sup>1</sup>,
 [Jan Eric Lenssen](https://janericlenssen.github.io/)<sup>1</sup>
 
 <sup>1</sup>Max Planck Institute for Informatics, <sup>2</sup>ETH Zurich, <sup>3</sup>Google, <sup>4</sup>TU Munich
