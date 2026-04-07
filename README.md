@@ -29,6 +29,11 @@ types, and preserves feature semantics while being efficient and easy to apply t
 
 🔔 **News:**
 
+**[03/26]** AnyUp was used in [Falcon Perception](https://github.com/tiiuae/Falcon-Perception).
+The authors also implemented an efficient **[MLX-compatible version of AnyUp](https://github.com/tiiuae/Falcon-Perception/blob/main/falcon_perception/mlx/anyup.py)**, which is available in their repository.
+Check it out if you want to use AnyUp on edge devices!
+
+
 **[11/25]** We added a **more efficient** (both memory and speed-wise) [NATTEN](https://natten.org/)-based version of the
 window attention module used in AnyUp. You can load the new model by specifying `use_natten=True` when loading the model
 from torch.hub. Please note, that this model variant uses slightly different windows than the original AnyUp model,
