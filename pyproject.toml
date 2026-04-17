@@ -13,7 +13,6 @@ authors = [
     { name = "Thomas Wimmer", email = "twimmer@mpi-inf.mpg.de" }
 ]
 classifiers = [
-    "License :: Other/Proprietary License",
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Programming Language :: Python :: 3",
